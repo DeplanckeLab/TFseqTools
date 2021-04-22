@@ -15,7 +15,7 @@ TF-seq preprocessing tool is provided as a [single executable jar file](../maste
 The .jar file contains all required materials and can be run on any terminal.
 
 #### Dependencies
-- Java version
+- **Java version:**
 For the tools to run properly, you must have Java >=1.8 installed. 
 To check your java version, open your terminal application and run the following command:
 
@@ -23,21 +23,25 @@ To check your java version, open your terminal application and run the following
 java -version
 ```
 
-If the output looks something like java version "1.8.x", you are good to go. 
+If the output looks something like java version "1.8.x" (or above), you are good to go. 
 If not, you may need to update your version; see the [Oracle Java website](http://www.oracle.com/technetwork/java/javase/downloads/) to download the latest JRE (for users) or JDK (for developers).
 
-- Picard
+- **Picard:**
 The software relies on [Picard Tools](http://broadinstitute.github.io/picard/), but the Picard JAR is already embedded in the released JAR, so no need to install it yourself.
 
 ### 1.2 Sequencing output, and mapping
 After sequencing your enriched TF-seq libraries, you should obtain two fastq files: 
-* R1 fastq file: This file should contain the barcodes and UMIs (for e.g. from 10x or Dropseq). Usually, the barcode comes before the UMI sequence.
-* R2 fastq file: This file should contain the exact same number of reads (and read names) than the R1 file. Except that the sequence of the reads are the sequences representing the RNA fragments.
+- **R1 fastq file:** This file should contain the barcodes and UMIs (for e.g. from 10x or Dropseq). Usually, the barcode comes before the UMI sequence.
+- **R2 fastq file:** This file should contain the exact same number of reads (and read names) than the R1 file. Except that the sequence of the reads are the sequences representing the RNA fragments.
 
 #### Alignment to vector
 You need to align this enriched library to the default construct containing the TF barcodes. Let's call this assembly "Vector". We provide the TF-seq vector fasta file in the "genome" folder.
 You can align the R2 fastq file on the " Vector" assembly using any aligner you are used to (STAR, bwa, ...).
+Example using STAR:
 
+```bash
+STAR --runMode alignReads --outSAMmapqUnique 60 --runThreadN 8 --genomeDir example/genome/Vector/STAR_Index --outFilterMultimapNmax 1 --readFilesCommand zcat --outSAMtype BAM Unsorted --outFileNamePrefix example/bam/ --readFilesIn example/fastq/TF_enrich_example_R2.fastq.gz
+```
 
 ### 1.3 Running TF-seq preprocessing tool to generate the TF-Cell mapping matrix
 To check that the preprocessing tool is working properly, run the following command:
@@ -85,15 +89,16 @@ TFseqTools vx.x
 You can see that the main options to use are --r1, --r2 and --tf
 So the final command will be:
 ```
-java -jar TFseqTools.jar Counter --r1 my.fastq_R1.fastq.gz --r2 my.aligned_R2.bam --tf my.tf.barcodes.txt
+java -jar TFseqTools.jar Counter --r1 example/fastq/TF_enrich_example_R1.fastq.gz --r2 example/bam/Aligned.out.bam --tf example/barcodes/tf_barcodes.txt
 ```
 
-> **Note:** You can download/edit this **[example of tf barcodes file](../master/examples/tf_barcodes.txt)**
+> **Note:** You can download/edit this **[example of tf barcodes file](../master/example/barcodes/tf_barcodes.txt)**
 
 ## Directory content
 * **src**: all source files required for compilation
 * **lib**: all JAR dependencies required for compilation / execution
 * **releases**: final, all embedded, released .jar files
+* **example**: list of example files and outputs, to set up the pipeline
 
 ## Author
 Vincent Gardeux - vincent.gardeux@epfl.ch
