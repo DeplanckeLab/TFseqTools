@@ -1,0 +1,15 @@
+### STAR   --runMode genomeGenerate   --runThreadN 1   --genomeDir .   --genomeFastaFiles pSIN-TRE-TFs-3-HA-puroR_BC_final.fa      --genomeSAindexNbases 5
+versionGenome	20201
+genomeFastaFiles	pSIN-TRE-TFs-3-HA-puroR_BC_final.fa 
+genomeSAindexNbases	5
+genomeChrBinNbits	18
+genomeSAsparseD	1
+sjdbOverhang	0
+sjdbFileChrStartEnd	- 
+sjdbGTFfile	-
+sjdbGTFchrPrefix	-
+sjdbGTFfeatureExon	exon
+sjdbGTFtagExonParentTranscript	transcript_id
+sjdbGTFtagExonParentGene	gene_id
+sjdbInsertSave	Basic
+genomeFileSizes	262144 78073

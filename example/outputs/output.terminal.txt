@@ -1,0 +1,39 @@
+TFseqTools v1.0
+
+-- Input Parameters --
+Cell barcodes (in R1 fastq file):
+        Pattern = 'BU'
+        Cell barcode sequence length = '16' [default to 10x protocol v3, use '--BC' option to change]
+        UMI sequence length = '12' [default to 10x protocol v3, use '--UMI' option to change]
+        According to barcode pattern, reads of R1 FastQ file should contain 28 characters.
+TF barcodes (searched for in R2 bam file):
+        Reference TF file = barcodes/tf_barcodes.txt
+        Barcode 1 is searched for at pos [6419, 6429],  l = 11
+        Barcode 2 is searched for at pos [6457, 6464],  l = 8
+Log File = NONE (specify a log file using option --log)
+Output folder = example/outputs/. Use '-o' option to change.
+
+-1- |  Reading TF barcodes
+89 barcodes found in barcode file.
+
+-2- |  Reading BAM file
+831509 reads were processed from BAM file [3 mn 29 s 743 ms]
+831509 total reads in BAM file.
+0 unmapped reads in BAM file.
+0 not unique alignments.
+0 too Low AQual.
+0 too Low SQual.
+789449 reads are consistently mapping to existing TFs.
+42060 reads are not mapping to TFs      (5.06%)
+187 reads overlap with barcode 1 only   (0.02%)
+41 reads overlap with barcode 2 only    (0%)
+799163 reads overlap with both barcodes (96.11%)
+
+-3- |  Reading R1 fastq file
+
+Reading reads barcodes/UMI from the R1 fastq file...
+1000000 reads were processed from fastq file [1 s 577 ms]
+1000000 reads were processed from fastq file [1 s 585 ms]
+1000000 total reads in FASTQ file.
+789449 R2 TF reads were matching R1 fastq file
+17031 unique CELL barcodes were found.

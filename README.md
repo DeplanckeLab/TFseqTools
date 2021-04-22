@@ -35,8 +35,8 @@ After sequencing your enriched TF-seq libraries, you should obtain two fastq fil
 - **R2 fastq file:** This file should contain the exact same number of reads (and read names) than the R1 file. Except that the sequence of the reads are the sequences representing the RNA fragments.
 
 #### Alignment to vector
-You need to align this enriched library to the default construct containing the TF barcodes. Let's call this assembly "Vector". We provide the TF-seq vector fasta file in the "genome" folder.
-You can align the R2 fastq file on the " Vector" assembly using any aligner you are used to (STAR, bwa, ...).
+You need to align this enriched library to the default construct containing the TF barcodes. Let's call this assembly "Vector". We provide the TF-seq vector fasta file in the "example/genome" folder.
+You can align the R2 fastq file on the "Vector" assembly using any aligner you are used to (STAR, bwa, ...).
 Example using STAR:
 
 ```bash
@@ -89,7 +89,7 @@ TFseqTools vx.x
 You can see that the main options to use are --r1, --r2 and --tf
 So the final command will be:
 ```
-java -jar TFseqTools.jar Counter --r1 example/fastq/TF_enrich_example_R1.fastq.gz --r2 example/bam/Aligned.out.bam --tf example/barcodes/tf_barcodes.txt
+java -jar TFseqTools.jar Counter --r1 example/fastq/TF_enrich_example_R1.fastq.gz --r2 example/bam/Aligned.out.bam --tf example/barcodes/tf_barcodes.txt -o example/outputs/
 ```
 
 > **Note:** You can download/edit this **[example of tf barcodes file](../master/example/barcodes/tf_barcodes.txt)**
