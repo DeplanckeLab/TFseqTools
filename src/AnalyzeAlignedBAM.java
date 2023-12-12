@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -20,6 +21,8 @@ import tools.Utils;
 
 public class AnalyzeAlignedBAM 
 {	
+	public static Levenshtein metric = new Levenshtein();
+	
 	/**
 	 * Using Picard to read the reads from the BAM file created by the alignment tool
 	 * @throws Exception Yes I know...
@@ -49,8 +52,15 @@ public class AnalyzeAlignedBAM
 				else if(sequencing_phred < 10) Parameters.tooLowSQUAL++;
 				else 
 				{
+					// Check duplicated read names
+					String readName = samRecord.getReadName();
+					if(result.containsKey(readName)) new ErrorMessage("Duplicated read names: " + readName);
+					
+					// Search for consistently overlapping barcode
 					Barcode bc = overlapsBC(samRecord);
-					if(bc != null) result.put(samRecord.getReadName(), bc);
+					
+					// Add to result if found
+					if(bc != null) result.put(readName, bc);
 				}
 				if(Parameters.nbReads%Parameters.chunkSize == 0) System.out.println(Parameters.nbReads + " reads were processed from BAM file [" + Utils.toReadableTime(System.currentTimeMillis() - start) + "]");
 			}
@@ -68,258 +78,125 @@ public class AnalyzeAlignedBAM
 		return result;
 	}
 	
+	public static ArrayList<Barcode> getBestMatchingBarcodes(String barcode, boolean isFirst)
+	{
+		ArrayList<Barcode> bestMatching = new ArrayList<Barcode>();
+		if(barcode == null) return bestMatching;
+		float max = 0;
+		for(Barcode b:Parameters.bc)
+		{
+			String comparedTo = b.second;
+			if(isFirst) comparedTo = b.first;
+			float result = metric.compare(barcode, comparedTo);
+			if(result > 0.9) // 0.909... for 1 mismatch 11 bp. The only accepted mismatch rate
+			{
+				if(result > max) 
+				{
+					bestMatching.clear();
+					bestMatching.add(b);
+					max = result;
+				} 
+				else if(result == max) 
+				{
+					bestMatching.add(b);
+				}
+			}
+		}
+		return bestMatching;
+	}
+	
 	public static Barcode overlapsBC(SAMRecord samRecord)
 	{
+		// Extract barcodes
 		String BC1 = getAlignedStringAtPos(samRecord, Parameters.startBC1, Parameters.endBC1); // position of barcode 1
 		String BC2 = getAlignedStringAtPos(samRecord, Parameters.startBC2, Parameters.endBC2); // position of barcode 2
 		if(BC1 != null && BC1.equals(Barcode.construct("-", Parameters.lBC1))) BC1 = null; // Construct of length 11
 		if(BC2 != null && BC2.equals(Barcode.construct("-", Parameters.lBC2))) BC2 = null; // Construct of length 8
 		if(BC1 != null && BC1.equals(Barcode.construct("N", Parameters.lBC1))) BC1 = null; // Construct of length 11
 		if(BC2 != null && BC2.equals(Barcode.construct("N", Parameters.lBC2))) BC2 = null; // Construct of length 8
-		if(BC1 != null && BC2 != null)
-		{
-			Levenshtein metric = new Levenshtein();
-			Barcode bestMatch1 = null;
-			int whichReturn = -1;
-			boolean multiple1 = false;
-			float max1 = 0;
-			String same1 = "Barcodes with same similarity value:";
-			for(Barcode b:Parameters.bc)
-			{
-				float result = metric.compare(BC1, b.first);
-				if(result > 0.9) // 0.909... for 1 mismatch 11 bp. The only accepted mismatch rate
-				{
-					if(result > max1) 
-					{
-						multiple1 = false;
-						same1 = "Barcodes with same similarity value:";
-						bestMatch1 = b;
-						max1 = result;
-					} 
-					else if(result == max1) 
-					{
-						multiple1 = true;
-						same1 += "\t" + b.first;
-					}
-				}
-			}
-
-			Barcode bestMatch2 = null;
-			float max2 = 0;
-			boolean multiple2 = false;
-			String same2 = "Barcodes with same similarity value:";
-			for(Barcode b:Parameters.bc)
-			{
-				float result = metric.compare(BC2, b.second);
-				if(result > 0.85) // 0.875... for 1 mismatch 8 bp. The only accepted mismatch rate
-				{
-					if(result > max2) 
-					{
-						multiple2 = false;
-						same2 = "Barcodes with same similarity value:";
-						bestMatch2 = b;
-						max2 = result;
-					} 
-					else if(result == max2) 
-					{
-						multiple2 = true;
-						same2 += "\t" + b.second;
-					}
-				}
-			}
 		
-			if(bestMatch1 == null && bestMatch2 == null) return null;
-			if(bestMatch1 == bestMatch2) 
-			{
-				bestMatch1.count++;
-				bestMatch2.count++;
-				Logger.write("[COUNTED]");
-				whichReturn = 1;
-			}
-			else if(bestMatch1 == null && bestMatch2 != null && !multiple2)
-			{
-				bestMatch2.count++;
-				Logger.write("[COUNTED]");
-				whichReturn = 2;
-			}
-			else if(bestMatch2 == null && bestMatch1 != null && !multiple1)
-			{
-				bestMatch1.count++;
-				Logger.write("[COUNTED]");
-				whichReturn = 1;
-			}
-//			else
-//			{
-//				if(multiple1 && multiple2)
-//				{
-//					Logger.log.write("[NOT COUNTED]");
-//					// They cannot be saved by the other... Stop
-//				}
-//				else if(multiple1)
-//				{
-//					// Assume barcode2 is correct, check if barcode1 can fit one of the stuffs
-//					String[] possibleSave = same1.split("\t");
-//					boolean flag = false;
-//					for(String save:possibleSave)
-//					{
-//						if(bestMatch2.first.equals(save))
-//						{
-//							bestMatch2.count++;
-//							flag = true;
-//							Logger.log.write("[COUNTED]");
-//							whichReturn = 2;
-//							break;
-//						}
-//					}
-//					if(!flag) Logger.log.write("[NOT COUNTED]");
-//				}
-//				else if(!same2.equals("Barcodes with same similarity value:"))
-//				{
-//					// Assume barcode1 is correct, check if barcode2 can fit one of the stuffs
-//					String[] possibleSave = same2.split("\t");
-//					boolean flag = false;
-//					for(String save:possibleSave)
-//					{
-//						if(bestMatch1.second.equals(save))
-//						{
-//							bestMatch1.count++;
-//							flag = true;
-//							Logger.log.write("[COUNTED]");
-//							whichReturn = 1;
-//							break;
-//						}
-//					}
-//					if(!flag) Logger.log.write("[NOT COUNTED]");
-//				}
-//				else
-//				{
-//					Logger.log.write("[NOT COUNTED]");
-//					// None has other options... Stop
-//				}
-//			}
-			
-			Logger.write(BC1 + " First  barcode found.");
-			if(bestMatch1 != null) 
-			{
-				Logger.write(" Best match = " + bestMatch1.first + " (" + bestMatch1.name + " " + bestMatch1.id + ") : " + max1);
-				if(!same1.equals("Barcodes with same similarity value:")) Logger.write("[" + same1 + "]");
-			}
-			else Logger.write(" No Match.");
-			Logger.write(", " + BC2 + " Second barcode found.");
-			if(bestMatch2 != null) 
-			{
-				Logger.write(" Best match = " + bestMatch2.second + " (" + bestMatch2.name + " " + bestMatch2.id + ") : " + max2);
-				if(!same2.equals("Barcodes with same similarity value:")) Logger.write("[" + same2 + "]");
-			}
-			Logger.write("\n");
-			
-			Parameters.overlapBoth++;
-			
-			switch(whichReturn)
-			{
-				case 1: return bestMatch1;
-				case 2: return bestMatch2;
-				default: return null;
-			}
-		}
-		else if(BC1 != null) 
+		// Get best matching barcodes
+		ArrayList<Barcode> matchingBC1 = getBestMatchingBarcodes(BC1, true);
+		ArrayList<Barcode> matchingBC2 = getBestMatchingBarcodes(BC2, false);
+		
+		// Count them or not
+		// No overlap
+		if(matchingBC1.isEmpty() && matchingBC2.isEmpty()) return null;
+		
+		// Overlap both
+		if(!matchingBC1.isEmpty() && !matchingBC2.isEmpty()) 
 		{
-			boolean returnBestMatch = false;
-			Levenshtein metric = new Levenshtein();
 			Barcode bestMatch = null;
-			float max = 0;
-			boolean multiple = false;
-			String same = "Barcodes with same similarity value:";
-			for(Barcode b:Parameters.bc)
-			{
-				float result = metric.compare(BC1, b.first);
-				if(result > 0.9)  // 0.909... for 1 mismatch 11 bp. The only accepted mismatch rate
-				{
-					if(result > max) 
-					{
-						multiple = false;
-						same = "Barcodes with same similarity value:";
-						bestMatch = b;
-						max = result;
-					} 
-					else if(result == max) 
-					{
-						multiple = true;
-						same += "\t" + b.first;
-					}
-				}
-			}
 			
-			if(!multiple && bestMatch != null)
-			{
-				Logger.write("[COUNTED]");
-				bestMatch.count++;
-				returnBestMatch = true;
-			}
-			else Logger.write("[NOT COUNTED]");
+			// Intersection
+			String bc1 = Barcode.toString(matchingBC1);
+			matchingBC1.retainAll(matchingBC2); // Retaining barcodes (comparing object refs)
 			
-			Logger.write(BC1 + " First  barcode found.");
-			if(bestMatch != null) 
+			// Only one in common
+			if(matchingBC1.size() == 1)
 			{
-				Logger.write(" Best match = " + bestMatch.first + " (" + bestMatch.name + " " + bestMatch.id + ") : " + max);
-				if(!same.equals("Barcodes with same similarity value:")) Logger.write("[" + same + "]");
+				bestMatch = matchingBC1.get(0);
+				Logger.write("[COUNTED] Best match: BC1&BC2[" + bestMatch + "]\n");
+				Parameters.overlapBoth++;
 			}
-			Logger.write("\n");
-			Parameters.overlapBC1++;
-			
-			if(returnBestMatch) return bestMatch;
-			return null;
-		}
-		else if(BC2 != null) 
-		{
-			boolean returnBestMatch = false;
-			Levenshtein metric = new Levenshtein();
-			Barcode bestMatch = null;
-			float max = 0;
-			boolean multiple = false;
-			String same = "Barcodes with same similarity value:";
-			for(Barcode b:Parameters.bc)
+			else if(matchingBC1.size() > 1)// Multiple in common
 			{
-				float result = metric.compare(BC2, b.second);
-				if(result > 0.85) // 0.875... for 1 mismatch 8 bp. The only accepted mismatch rate
-				{
-					if(result > max) 
-					{
-						multiple = false;
-						same = "Barcodes with same similarity value:";
-						bestMatch = b;
-						max = result;
-					} 
-					else if(result == max) 
-					{
-						multiple = true;
-						same += "\t" + b.second;
-					}
-				}
+				Logger.write("[NOT COUNTED] Multiple barcodes in common: BC1" + bc1 + " - BC2" + Barcode.toString(matchingBC2) + "\n");
 			}
-			
-			if(!multiple && bestMatch != null)
+			else // No one in common
 			{
-				Logger.write("[COUNTED]");
-				bestMatch.count++;
-				returnBestMatch = true;
+				Logger.write("[NOT COUNTED] None of the found barcodes are in common: " + bc1 + " - BC2" + Barcode.toString(matchingBC2) + "\n");
 			}
-			else Logger.write("[NOT COUNTED]");
-			
-			Logger.write(BC2 + " Second  barcode found.");
-			if(bestMatch != null) 
-			{
-				Logger.write(" Best match = " + bestMatch.second + " (" + bestMatch.name + " " + bestMatch.id + ") : " + max);
-				if(!same.equals("Barcodes with same similarity value:")) Logger.write("[" + same + "]");
-			}
-	
-			Logger.write("\n");
-			Parameters.overlapBC2++;
-			
-			if(returnBestMatch) return bestMatch;
-			return null;
+			return bestMatch;
 		}
 		
+		// Overlap BC1 only
+		if(!matchingBC1.isEmpty() && matchingBC2.isEmpty()) 
+		{
+			Barcode bestMatch = null;
+			
+			// Only one
+			if(matchingBC1.size() == 1)
+			{
+				bestMatch = matchingBC1.get(0);
+				Logger.write("[COUNTED] Best match: BC1[" + bestMatch + "] & BC2[Empty]\n");
+				Parameters.overlapBC1++;
+			}
+			else if(matchingBC1.size() > 1)// Multiple
+			{
+				Logger.write("[NOT COUNTED] Multiple barcodes found: BC1" + Barcode.toString(matchingBC1) + " & BC2[Empty]\n");
+			}
+			else
+			{
+				// This should not happen
+				new ErrorMessage("This should not happen [AnalyzeAlignedBAM, l.173]");
+			}
+			return bestMatch;
+		}
+		
+		// Overlap BC2 only
+		if(matchingBC1.isEmpty() && !matchingBC2.isEmpty()) 
+		{
+			Barcode bestMatch = null;
+			
+			// Only one
+			if(matchingBC2.size() == 1)
+			{
+				bestMatch = matchingBC2.get(0);
+				Logger.write("[COUNTED] Best match: BC1[Empty] & BC2[" + bestMatch + "]\n");
+				Parameters.overlapBC2++;
+			}
+			else if(matchingBC2.size() > 1)// Multiple
+			{
+				Logger.write("[NOT COUNTED] Multiple barcodes found: BC1[Empty] & BC2" + Barcode.toString(matchingBC1) + "\n");
+			}
+			else
+			{
+				// This should not happen
+				new ErrorMessage("This should not happen [AnalyzeAlignedBAM, l.199]");
+			}
+			return bestMatch;
+		}
 		return null;
 	}
 	

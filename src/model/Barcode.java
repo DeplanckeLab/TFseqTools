@@ -13,7 +13,6 @@ public class Barcode
 	public String second;
 	public String name;
 	public String id;
-	public int count = 0;
 	
 	public static ArrayList<Barcode> readBarcodeFile(File filename)
 	{
@@ -59,5 +58,22 @@ public class Barcode
 		StringBuffer sb = new StringBuffer();
 		for(int i = 0; i < repeat; i++) sb.append(a);
 		return sb.toString();
+	}
+	
+	public static String toString(ArrayList<Barcode> list)
+	{
+		StringBuffer sb = new StringBuffer("[");
+		String prefix = "";
+		for(int i = 0; i < list.size(); i++)
+		{
+			sb.append(prefix).append(list.get(i));
+			prefix = ",";
+		}
+		return sb.append("]").toString();
+	}
+	
+	@Override
+	public String toString() {
+		return this.first + " (" + this.name + " " + this.id + ")";
 	}
 }

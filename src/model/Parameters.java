@@ -9,7 +9,7 @@ enum Strand{NO, YES, REVERSE};
 
 public class Parameters 
 {
-	public static final String currentVersion = "1.0";
+	public static final String currentVersion = "1.1";
 	public static DecimalFormat myFormatter = new DecimalFormat("##.##");
 	
 	// Barcodes
