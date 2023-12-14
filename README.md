@@ -1,6 +1,6 @@
 ![](https://img.shields.io/badge/build-passing-green.svg)
-![](https://img.shields.io/badge/version-1.0.0-blue.svg)
-![](https://img.shields.io/badge/picard-2.9.0-blue.svg)
+![](https://img.shields.io/badge/version-1.1.0-blue.svg)
+![](https://img.shields.io/badge/htsjdk-2.24.1-blue.svg)
 ![](https://img.shields.io/badge/java-1.8-red.svg)
 
 # TF-seq Tools
@@ -11,7 +11,7 @@ TF-seq generates an enriched library containing one to one mapping between cell 
 The first step is to create a read/UMI count matrix containing TF x cell to properly assign TF to cells.
 
 ### 1.1. Download software
-TF-seq preprocessing tool is provided as a [single executable jar file](../master/releases/TFseqTools-1.0.jar?raw=true).
+TF-seq preprocessing tool is provided as a [single executable jar file](../master/releases/TFseqTools-1.1.jar?raw=true).
 The .jar file contains all required materials and can be run on any terminal.
 
 #### Dependencies
@@ -26,8 +26,8 @@ java -version
 If the output looks something like java version "1.8.x" (or above), you are good to go. 
 If not, you may need to update your version; see the [Oracle Java website](http://www.oracle.com/technetwork/java/javase/downloads/) to download the latest JRE (for users) or JDK (for developers).
 
-- **Picard:**
-The software relies on [Picard Tools](http://broadinstitute.github.io/picard/), but the Picard JAR is already embedded in the released JAR, so no need to install it yourself.
+- **htsjdk:**
+The software relies on **htsjdk-2.24.1.jar**, but the JAR is already embedded in the released JAR, so no need to install it yourself.
 
 ### 1.2 Sequencing output, and mapping
 After sequencing your enriched TF-seq libraries, you should obtain two fastq files: 
