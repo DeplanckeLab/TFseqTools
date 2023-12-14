@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Set;
 
 public class Barcode 
 {
@@ -16,6 +17,7 @@ public class Barcode
 	
 	public static ArrayList<Barcode> readBarcodeFile(File filename)
 	{
+		Set<String> unique_barcodes = new HashSet<String>();
 		ArrayList<Barcode> bc = new ArrayList<Barcode>();
 		try
 		{
@@ -27,6 +29,8 @@ public class Barcode
 				Barcode b = new Barcode();
 				b.name = tokens[0].trim();
 				b.id = tokens[1].trim();
+				if(unique_barcodes.contains(b.id)) new ErrorMessage("Barcode ID: " + b.id + " is not unique");
+				unique_barcodes.add(b.id);
 				b.first = tokens[2].toUpperCase().trim();
 				if(b.first.length() != Parameters.lBC1) new ErrorMessage("Barcode " + b.first + " is not of the correct length (" + Parameters.lBC1 + " )");
 				b.second = tokens[3].toUpperCase().trim();
