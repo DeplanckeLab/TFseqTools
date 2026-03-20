@@ -1,5 +1,5 @@
 ![](https://img.shields.io/badge/build-passing-green.svg)
-![](https://img.shields.io/badge/version-1.1.0-blue.svg)
+![](https://img.shields.io/badge/version-1.2.0-blue.svg)
 ![](https://img.shields.io/badge/htsjdk-2.24.1-blue.svg)
 ![](https://img.shields.io/badge/java-1.8-red.svg)
 
