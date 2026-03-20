@@ -9,15 +9,15 @@ enum Strand{NO, YES, REVERSE};
 
 public class Parameters 
 {
-	public static final String currentVersion = "1.1";
+	public static final String currentVersion = "1.2";
 	public static DecimalFormat myFormatter = new DecimalFormat("##.##");
 	
 	// Barcodes
-	public static int startBC1 = 6419; // Pos in fasta genome to align to
-	public static int endBC1 = 6429; // Pos in fasta genome to align to
+	public static int startBC1 = 3409; // Pos in fasta genome to align to (eTFs.consensus.fa)
+	public static int endBC1 = 3419;   // Pos in fasta genome to align to (eTFs.consensus.fa)
 	public static int lBC1 = -1;
-	public static int startBC2 = 6457; // Pos in fasta genome to align to
-	public static int endBC2 = 6464; // Pos in fasta genome to align to
+	public static int startBC2 = 3447; // Pos in fasta genome to align to (eTFs.consensus.fa)
+	public static int endBC2 = 3454;   // Pos in fasta genome to align to (eTFs.consensus.fa)
 	public static int lBC2 = -1;
 	public static int overlapBC1 = 0;
 	public static int overlapBC2 = 0;
@@ -178,6 +178,50 @@ public class Parameters
 							new ErrorMessage("The '-p' option should be followed by a valid barcode pattern. " + e.getMessage() + ". You entered " + args[i]);
 						}
 						break;
+					case "--startBC1":
+						i++;
+						try
+						{
+							startBC1 = Integer.parseInt(args[i]);
+						}
+						catch(NumberFormatException nfe)
+						{
+							new ErrorMessage("The '--startBC1' option should be followed by an Integer. You entered " + args[i]);
+						}
+						break;
+					case "--endBC1":
+						i++;
+						try
+						{
+							endBC1 = Integer.parseInt(args[i]);
+						}
+						catch(NumberFormatException nfe)
+						{
+							new ErrorMessage("The '--endBC1' option should be followed by an Integer. You entered " + args[i]);
+						}
+						break;
+					case "--startBC2":
+						i++;
+						try
+						{
+							startBC2 = Integer.parseInt(args[i]);
+						}
+						catch(NumberFormatException nfe)
+						{
+							new ErrorMessage("The '--startBC2' option should be followed by an Integer. You entered " + args[i]);
+						}
+						break;
+					case "--endBC2":
+						i++;
+						try
+						{
+							endBC2 = Integer.parseInt(args[i]);
+						}
+						catch(NumberFormatException nfe)
+						{
+							new ErrorMessage("The '--endBC2' option should be followed by an Integer. You entered " + args[i]);
+						}
+						break;
 					default:
 						System.err.println("Unused argument: " + args[i]);
 				}
@@ -194,6 +238,14 @@ public class Parameters
 		if(inputTFFile == null) 
 		{
 			new ErrorMessage("Please use '--tf' option to specify the path of the TF barcodes to use");
+		}
+		if(startBC1 >= endBC1)
+		{
+			new ErrorMessage("--startBC1 (" + startBC1 + ") must be strictly less than --endBC1 (" + endBC1 + ")");
+		}
+		if(startBC2 >= endBC2)
+		{
+			new ErrorMessage("--startBC2 (" + startBC2 + ") must be strictly less than --endBC2 (" + endBC2 + ")");
 		}
 		System.out.println("\n-- Input Parameters --");
 		System.out.println("Cell barcodes (in R1 fastq file):");
@@ -231,8 +283,8 @@ public class Parameters
 		// Handle barcodes
 		Parameters.lBC1 = Parameters.endBC1 - Parameters.startBC1 + 1;
 		Parameters.lBC2 = Parameters.endBC2 - Parameters.startBC2 + 1;
-		System.out.println("\tBarcode 1 is searched for at pos [" + Parameters.startBC1 + ", " + Parameters.endBC1 + "],  l = " + Parameters.lBC1);
-		System.out.println("\tBarcode 2 is searched for at pos [" + Parameters.startBC2 + ", " + Parameters.endBC2 + "],  l = " + Parameters.lBC2);
+		System.out.println("\tBarcode 1 is searched for at pos [" + Parameters.startBC1 + ", " + Parameters.endBC1 + "],  l = " + Parameters.lBC1 + (isDefaultBC1() ? " [default]" : ""));
+		System.out.println("\tBarcode 2 is searched for at pos [" + Parameters.startBC2 + ", " + Parameters.endBC2 + "],  l = " + Parameters.lBC2 + (isDefaultBC2() ? " [default]" : ""));
 		
 		if(outputFolder == null)
 		{
@@ -249,6 +301,9 @@ public class Parameters
 	
 		System.out.println("Output folder = " + Parameters.outputFolder + ". Use '-o' option to change.");
 	}
+
+	private static boolean isDefaultBC1() { return startBC1 == 3409 && endBC1 == 3419; }
+	private static boolean isDefaultBC2() { return startBC2 == 3447 && endBC2 == 3454; }
 	
 	private static void printHelpCounter()
 	{
@@ -257,6 +312,11 @@ public class Parameters
 		System.out.println("\t--r2 %s \t[Required] Path of R2 aligned BAM file [do not need to be sorted or indexed].");
 		System.out.println("\t--tf %s \t[Required] File containing known TF barcodes");
 		System.out.println("\t-o %s \t\tOutput folder [default = folder of BAM file]");
+		System.out.println("\n-- Barcode position options --");
+		System.out.println("\t--startBC1 %i \tStart position of barcode 1 in the reference genome [default = 3409].");
+		System.out.println("\t--endBC1 %i \tEnd position of barcode 1 in the reference genome [default = 3419].");
+		System.out.println("\t--startBC2 %i \tStart position of barcode 2 in the reference genome [default = 3447].");
+		System.out.println("\t--endBC2 %i \tEnd position of barcode 2 in the reference genome [default = 3454].");
 		System.out.println("\n-- Additional options --");
 		System.out.println("\t--log %i \tDetailed log file [default: None]");
 		System.out.println("\t--nu %i \tNumber of allowed difference (hamming distance) for two UMIs to be counted only once [default = 0].");
